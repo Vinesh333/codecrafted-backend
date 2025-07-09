@@ -13,7 +13,8 @@ app.use(cors());
 app.use(express.json());
 
 // ✅ MongoDB Connection
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
@@ -23,19 +24,19 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_USER,  // Should look like "9163a9001@smtp-brevo.com"
-    pass: process.env.EMAIL_PASS,  // Your Brevo SMTP key
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
-// ✅ POST /api/contact — save to DB & send email
+// ✅ POST /api/contact — Save to DB & Send Emails
 app.post("/api/contact", async (req, res) => {
   try {
     const contact = new Contact(req.body);
     await contact.save();
     console.log("✅ Contact saved:", req.body);
 
-    // 💌 Email to You
+    // Email to You
     const adminMail = {
       from: `"CodeCrafted Portfolio" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER,
@@ -54,7 +55,7 @@ app.post("/api/contact", async (req, res) => {
       `,
     };
 
-    // 💌 Auto-Reply to the user
+    // Auto-Reply to User
     const clientMail = {
       from: `"CodeCrafted Portfolio" <${process.env.EMAIL_USER}>`,
       to: req.body.email,
@@ -72,11 +73,11 @@ app.post("/api/contact", async (req, res) => {
     console.log("📧 Emails sent: to Admin and User");
     res.status(200).json({ message: "Contact saved and emails sent!" });
   } catch (error) {
-    console.error("❌ Submission Error:", error);
-    res.status(500).json({ error: "Submission failed. Please try again." });
-  }
-});
+  console.error("❌ Full Submission Error:", error);
+  res.status(500).json({ error: error.message });
+}
 
+});
 
 // ✅ Start Server
 app.listen(PORT, () => {
