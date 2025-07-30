@@ -18,15 +18,14 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// ✅ Nodemailer (Brevo SMTP Setup)
+// ✅ Nodemailer — Gmail + App Password
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.EMAIL_USER, // your Gmail
+    pass: process.env.EMAIL_PASS, // 16-digit App Password
   },
 });
-
 
 // ✅ POST /api/contact — Save to DB & Send Emails
 app.post("/api/contact", async (req, res) => {
@@ -35,9 +34,9 @@ app.post("/api/contact", async (req, res) => {
     await contact.save();
     console.log("✅ Contact saved:", req.body);
 
-    // Email to You
+    // Admin notification email
     const adminMail = {
-      from: `"CodeCrafted Portfolio" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_USER,
       to: process.env.EMAIL_USER,
       subject: "📬 New Contact Form Submission",
       html: `
@@ -54,9 +53,9 @@ app.post("/api/contact", async (req, res) => {
       `,
     };
 
-    // Auto-Reply to User
+    // Auto reply to client
     const clientMail = {
-      from: `"CodeCrafted Portfolio" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_USER,
       to: req.body.email,
       subject: "🎉 We've received your message!",
       html: `
@@ -69,13 +68,12 @@ app.post("/api/contact", async (req, res) => {
     await transporter.sendMail(adminMail);
     await transporter.sendMail(clientMail);
 
-    console.log("📧 Emails sent: to Admin and User");
+    console.log("📧 Emails sent to Admin & User");
     res.status(200).json({ message: "Contact saved and emails sent!" });
   } catch (error) {
-  console.error("❌ Full Submission Error:", error);
-  res.status(500).json({ error: error.message });
-}
-
+    console.error("❌ Full Submission Error:", error);
+    res.status(500).json({ error: "Submission failed. Please try again." });
+  }
 });
 
 // ✅ Start Server
